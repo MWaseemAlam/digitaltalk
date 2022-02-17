@@ -35,16 +35,20 @@ class BookingController extends Controller
      */
     public function index(Request $request)
     {
-        if($user_id = $request->get('user_id')) {
-
+        $validator = Validator::make($request->all(), [
+            'user_id'     =>  'required|integer',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->messages()], 401);
+        }
+        if($request->has('user_id')) {
+            $user_id = $request->get('user_id');
             $response = $this->repository->getUsersJobs($user_id);
-
         }
         elseif($request->__authenticatedUser->user_type == env('ADMIN_ROLE_ID') || $request->__authenticatedUser->user_type == env('SUPERADMIN_ROLE_ID'))
         {
             $response = $this->repository->getAll($request);
         }
-
         return response($response);
     }
 
@@ -55,8 +59,12 @@ class BookingController extends Controller
     public function show($id)
     {
         $job = $this->repository->with('translatorJobRel.user')->find($id);
+        if($job){
+            return response($job);
+        }else{
+            return "No Job found";
+        }
 
-        return response($job);
     }
 
     /**
